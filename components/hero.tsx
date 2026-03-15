@@ -1,45 +1,36 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
 import { GL } from "./gl";
 import { Pill } from "./pill";
 import { Button } from "./ui/button";
+import { useState } from "react";
 
 export function Hero() {
   const [hovering, setHovering] = useState(false);
-
   return (
-    <main className="content-wrap">
+    <div className="flex flex-col h-svh justify-between">
       <GL hovering={hovering} />
-
-      <section className="hero" style={{ justifyContent: "center", minHeight: "88vh", paddingBottom: 0 }}>
-        <div className="container" style={{ maxWidth: 900 }}>
-          <Pill>TENDER HOOKS · NZ LAUNCH</Pill>
-          <h1 className="hero-title">Capture high-fit tenders<br /><i style={{ fontWeight: 300 }}>before your competitors do</i></h1>
-          <p className="hero-sub">Tender Hooks scans public opportunities daily, then delivers ranked, decision-ready shortlists to your inbox at 07:30.</p>
-          <Link href="/onboarding">
-            <Button onMouseEnter={() => setHovering(true)} onMouseLeave={() => setHovering(false)}>
-              [Start 7-Day Trial]
-            </Button>
-          </Link>
-        </div>
-      </section>
-
-      <section className="section" id="how" style={{ paddingTop: 26 }}>
-        <div className="container grid three">
-          <article className="panel card"><h3>Daily Match Feed</h3><p className="muted">Top 5-20 opportunities matched to your services, region, and ideal buyers.</p></article>
-          <article className="panel card"><h3>AI Relevance Scoring</h3><p className="muted">Transparent scoring to drive faster go/no-go bid decisions.</p></article>
-          <article className="panel card"><h3>Action Notes</h3><p className="muted">Short rationale per listing so your team acts quickly with confidence.</p></article>
-        </div>
-      </section>
-
-      <section className="section" id="pricing" style={{ paddingTop: 16 }}>
-        <div className="container grid two">
-          <article className="panel card"><h3>Starter — NZ$99/mo</h3><p className="muted">One profile · daily digest</p></article>
-          <article className="panel card"><h3>Pro — NZ$249/mo</h3><p className="muted">Up to 3 profiles · priority alerts</p></article>
-        </div>
-      </section>
-    </main>
+      <div className="pb-16 mt-auto text-center relative">
+        <Pill className="mb-6">BETA RELEASE</Pill>
+        <h1 className="text-5xl sm:text-6xl md:text-7xl font-sentient">
+          Unlock your <br />
+          <i className="font-light">future</i> growth
+        </h1>
+        <p className="font-mono text-sm sm:text-base text-foreground/60 text-balance mt-8 max-w-[440px] mx-auto">
+          Through perpetual investment strategies that outperform the market
+        </p>
+        <Link className="contents max-sm:hidden" href="/#contact">
+          <Button className="mt-14" onMouseEnter={() => setHovering(true)} onMouseLeave={() => setHovering(false)}>
+            [Contact Us]
+          </Button>
+        </Link>
+        <Link className="contents sm:hidden" href="/#contact">
+          <Button size="sm" className="mt-14" onMouseEnter={() => setHovering(true)} onMouseLeave={() => setHovering(false)}>
+            [Contact Us]
+          </Button>
+        </Link>
+      </div>
+    </div>
   );
 }

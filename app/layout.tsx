@@ -4,14 +4,14 @@ import "./globals.css";
 import { Header } from "@/components/header";
 
 export const metadata: Metadata = {
-  title: "Tender Hooks — High-Fit Tender Intelligence",
-  description: "Tender Hooks scans public tenders and delivers ranked, actionable opportunities daily.",
+  title: "Your Company Name",
+  description: "Your company description",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={GeistMono.variable} suppressHydrationWarning>
+      <body className={`${GeistMono.variable} antialiased`} suppressHydrationWarning>
         <Header />
         {children}
       </body>
