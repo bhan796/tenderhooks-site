@@ -1,10 +1,20 @@
 <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Tender Hooks mark">
   <defs>
-    <linearGradient id="g" x1="10" y1="10" x2="54" y2="54" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#4F8BFF"/>
-      <stop offset="1" stop-color="#27D1E8"/>
+    <linearGradient id="hookGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e40af;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0ea5e9;stop-opacity:1" />
     </linearGradient>
   </defs>
-  <rect x="6" y="6" width="52" height="52" rx="15" fill="#0D1629" stroke="#2C4272"/>
-  <path d="M18 24C18 19.5817 21.5817 16 26 16H40V24H26V26H36C41.5228 26 46 30.4772 46 36V38C46 43.5228 41.5228 48 36 48H20V40H36V38H26C20.4772 38 16 33.5228 16 28V26L18 24Z" fill="url(#g)"/>
+
+  <!-- Main geometric hook: curved line with precision accent -->
+  <g transform="translate(32, 32)">
+    <!-- Outer curve (the hook) -->
+    <path d="M -4 -14 Q -12 -8 -12 4 Q -12 14 -2 16" stroke="url(#hookGrad)" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- Vertical precision line (represents efficiency) -->
+    <line x1="6" y1="-12" x2="6" y2="16" stroke="url(#hookGrad)" stroke-width="2.5" stroke-linecap="round" opacity="0.8"/>
+
+    <!-- Small accent circle at top -->
+    <circle cx="6" cy="-12" r="1.5" fill="#1e40af"/>
+  </g>
 </svg>
