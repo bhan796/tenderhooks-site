@@ -1,14 +1,23 @@
-# Tender Hunter Landing Page
+# Tender Hooks Site (Next.js)
 
-## Preview locally
-Open `index.html` in your browser.
+Premium Tender Hooks web experience with:
+- dark black/gold visual system
+- custom serif/mono typography pairing
+- animated WebGL particle background
+- redesigned pages: Home, Onboarding, Terms, Privacy, Disclaimer
 
-## Deploy quickly
-- Netlify: drag-drop the `site/` folder
-- Vercel: import this folder as a static site
-- GitHub Pages: publish `site/` contents
+## Run locally
 
-## Before go-live
-- Replace `Subscribe (Stripe link)` anchors in `index.html` with real Stripe Payment Links
-- Replace support email `hello@tenderhunter.nz`
-- Add privacy/terms links in footer
+```bash
+npm install
+npm run dev
+```
+
+Open: http://localhost:3000
+
+## Build
+
+```bash
+npm run build
+npm start
+```
