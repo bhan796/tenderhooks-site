@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { cn } from "@/lib/utils";
 import * as Dialog from "@radix-ui/react-dialog";
@@ -9,10 +9,10 @@ import { useState } from "react";
 export const MobileMenu = ({ className }: { className?: string }) => {
   const [isOpen, setIsOpen] = useState(false);
   const menuItems = [
-    { name: "About", href: "#about" },
-    { name: "Portfolio", href: "#portfolio" },
-    { name: "Insights", href: "#insights" },
-    { name: "Contact", href: "#contact" },
+    { name: "About", href: "/#about" },
+    { name: "Insights", href: "/#insights" },
+    { name: "Use Cases", href: "/#portfolio" },
+    { name: "Contact", href: "/#contact" },
   ];
 
   return (
@@ -39,8 +39,8 @@ export const MobileMenu = ({ className }: { className?: string }) => {
               </Link>
             ))}
             <div className="mt-6">
-              <Link href="/#sign-in" onClick={() => setIsOpen(false)} className="inline-block text-xl font-mono uppercase text-primary transition-colors ease-out duration-150 hover:text-primary/80 py-2">
-                Sign In
+              <Link href="/onboarding" onClick={() => setIsOpen(false)} className="inline-block text-xl font-mono uppercase text-primary transition-colors ease-out duration-150 hover:text-primary/80 py-2">
+                Start Trial
               </Link>
             </div>
           </nav>
@@ -49,3 +49,4 @@ export const MobileMenu = ({ className }: { className?: string }) => {
     </Dialog.Root>
   );
 };
+
