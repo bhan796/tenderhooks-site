@@ -1,0 +1,12 @@
+<svg width="320" height="64" viewBox="0 0 320 64" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Tender Hooks logo">
+  <defs>
+    <linearGradient id="thg" x1="8" y1="8" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#4F8BFF"/>
+      <stop offset="1" stop-color="#27D1E8"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="8" width="48" height="48" rx="14" fill="#0D1629" stroke="#2C4272"/>
+  <path d="M16 22C16 18.6863 18.6863 16 22 16H37V24H22C21.4477 24 21 24.4477 21 25V26C21 26.5523 21.4477 27 22 27H34C39.5228 27 44 31.4772 44 37V38C44 43.5228 39.5228 48 34 48H19V40H34C34.5523 40 35 39.5523 35 39V38C35 37.4477 34.5523 37 34 37H22C16.4772 37 12 32.5228 12 27V26C12 24.5856 13.1 23.3 14.5 22.9L16 22Z" fill="url(#thg)"/>
+  <path d="M38 16V24H44V16H38Z" fill="#9CC0FF"/>
+  <text x="66" y="39" fill="#ECF2FF" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="28" font-weight="700" letter-spacing="0.2">Tender Hooks</text>
+</svg>
