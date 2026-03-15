@@ -10,6 +10,7 @@ export const Header = () => {
         <nav className="flex max-lg:hidden absolute left-1/2 -translate-x-1/2 items-center justify-center gap-x-10">
           {[
             { label: "About", href: "/#about" },
+            { label: "Pricing", href: "/#pricing" },
             { label: "Insights", href: "/#insights" },
             { label: "Use Cases", href: "/#portfolio" },
             { label: "Contact", href: "/#contact" },

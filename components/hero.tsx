@@ -36,6 +36,21 @@ export function Hero() {
         </div>
       </section>
 
+      <section id="pricing" className="relative z-10 px-4 pb-8">
+        <div className="container grid md:grid-cols-2 gap-4 font-mono">
+          <article className="border border-border bg-black/45 backdrop-blur-xs p-6">
+            <h3 className="font-sentient text-3xl mb-3">Starter</h3>
+            <p className="text-foreground/70 mb-4">Single niche profile, daily digest, NZ$99/mo.</p>
+            <Link className="text-primary uppercase" href="/onboarding?plan=starter">Choose Starter</Link>
+          </article>
+          <article className="border border-border bg-black/45 backdrop-blur-xs p-6">
+            <h3 className="font-sentient text-3xl mb-3">Pro</h3>
+            <p className="text-foreground/70 mb-4">Up to 3 profiles + priority alerts, NZ$249/mo.</p>
+            <Link className="text-primary uppercase" href="/onboarding?plan=pro">Choose Pro</Link>
+          </article>
+        </div>
+      </section>
+
       <section id="about" className="relative z-10 px-4 pb-10">
         <div className="container grid md:grid-cols-3 gap-4">
           <article className="border border-border bg-black/45 backdrop-blur-xs p-6">
@@ -55,4 +70,3 @@ export function Hero() {
     </div>
   );
 }
-
