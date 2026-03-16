@@ -12,6 +12,7 @@ type TenderItem = {
   close: string;
   region: string;
   source: string;
+  url: string;
 };
 
 const DAILY_TENDERS: TenderItem[] = [
@@ -22,6 +23,7 @@ const DAILY_TENDERS: TenderItem[] = [
     close: "2026-03-24",
     region: "Wellington",
     source: "GETS",
+    url: "https://www.gets.govt.nz/",
   },
   {
     title: "Cyber Security Advisory and Monitoring",
@@ -30,6 +32,7 @@ const DAILY_TENDERS: TenderItem[] = [
     close: "2026-03-22",
     region: "Auckland",
     source: "GETS",
+    url: "https://www.gets.govt.nz/",
   },
   {
     title: "Application Support and Service Desk",
@@ -38,6 +41,7 @@ const DAILY_TENDERS: TenderItem[] = [
     close: "2026-03-20",
     region: "Hamilton",
     source: "GETS",
+    url: "https://www.gets.govt.nz/",
   },
 ];
 
@@ -100,6 +104,14 @@ export default function DashboardPage() {
                 <p>Region: {item.region}</p>
                 <p>Source: {item.source}</p>
               </div>
+              <a
+                href={item.url}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-block mt-4 uppercase font-mono text-primary hover:text-primary/80"
+              >
+                Open Tender
+              </a>
             </article>
           ))}
         </div>
