@@ -39,7 +39,7 @@ export const Header = () => {
           {email ? (
             <>
               <Link className="uppercase transition-colors ease-out duration-150 font-mono text-foreground/70 hover:text-foreground" href="/dashboard">
-                {email}
+                Daily Digest
               </Link>
               <Link className="uppercase transition-colors ease-out duration-150 font-mono text-foreground/70 hover:text-foreground" href="/profile">
                 Profile
