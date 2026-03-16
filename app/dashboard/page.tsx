@@ -137,7 +137,7 @@ export default function DashboardPage() {
 
         <div className="mt-8 font-mono text-sm text-foreground/55">
           Demo view for now. Next step is wiring this page to your real generated digest/feed output.
-          <Link href="/onboarding" className="text-primary ml-2">Update profile</Link>
+          <Link href="/profile" className="text-primary ml-2">Update profile</Link>
         </div>
       </section>
     </main>

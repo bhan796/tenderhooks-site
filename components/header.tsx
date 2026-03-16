@@ -41,6 +41,9 @@ export const Header = () => {
               <Link className="uppercase transition-colors ease-out duration-150 font-mono text-foreground/70 hover:text-foreground" href="/dashboard">
                 {email}
               </Link>
+              <Link className="uppercase transition-colors ease-out duration-150 font-mono text-foreground/70 hover:text-foreground" href="/profile">
+                Profile
+              </Link>
               <button onClick={onLogout} className="uppercase transition-colors ease-out duration-150 font-mono text-foreground/70 hover:text-foreground">
                 Log Out
               </button>
