@@ -10,7 +10,6 @@ type PreferenceRow = {
   regions: string[] | null;
   keywords: string[] | null;
   exclude_keywords: string[] | null;
-  digest_time: string | null;
   delivery_channel: string | null;
 };
 
@@ -32,7 +31,6 @@ export default function ProfilePage() {
   const [regions, setRegions] = useState("New Zealand, Auckland, Wellington");
   const [keywords, setKeywords] = useState("cloud, managed services, cybersecurity");
   const [excludeKeywords, setExcludeKeywords] = useState("construction");
-  const [digestTime, setDigestTime] = useState("07:30");
   const [deliveryChannel, setDeliveryChannel] = useState("email");
 
   useEffect(() => {
@@ -55,7 +53,7 @@ export default function ProfilePage() {
 
       const { data: row, error: fetchError } = await client
         .from("user_preferences")
-        .select("user_id, regions, keywords, exclude_keywords, digest_time, delivery_channel")
+        .select("user_id, regions, keywords, exclude_keywords, delivery_channel")
         .eq("user_id", user.id)
         .maybeSingle<PreferenceRow>();
 
@@ -69,7 +67,6 @@ export default function ProfilePage() {
         setRegions((row.regions || []).join(", "));
         setKeywords((row.keywords || []).join(", "));
         setExcludeKeywords((row.exclude_keywords || []).join(", "));
-        setDigestTime(row.digest_time || "07:30");
         setDeliveryChannel(row.delivery_channel || "email");
       }
 
@@ -92,7 +89,7 @@ export default function ProfilePage() {
       regions: parseCsv(regions),
       keywords: parseCsv(keywords),
       exclude_keywords: parseCsv(excludeKeywords),
-      digest_time: digestTime,
+      digest_time: "07:30",
       delivery_channel: deliveryChannel,
       updated_at: new Date().toISOString(),
     };
@@ -124,6 +121,7 @@ export default function ProfilePage() {
         <div className="text-center mb-8">
           <h1 className="font-sentient text-4xl md:text-6xl">Profile Preferences</h1>
           <p className="font-mono text-foreground/65 mt-4">Set the filters used for your daily tender shortlist.</p>
+          <p className="font-mono text-foreground/50 mt-2">Digest delivery time is fixed at 07:30 NZ time.</p>
         </div>
 
         <div className="border border-border bg-black/45 backdrop-blur-xs p-6 md:p-8">
@@ -138,9 +136,6 @@ export default function ProfilePage() {
               <input value={excludeKeywords} onChange={(e) => setExcludeKeywords(e.target.value)} className="mt-2 w-full bg-black/40 border border-border h-11 px-3" />
             </label>
             <div className="grid md:grid-cols-2 gap-4">
-              <label className="text-sm text-foreground/70 uppercase">Digest Time
-                <input type="time" value={digestTime} onChange={(e) => setDigestTime(e.target.value)} className="mt-2 w-full bg-black/40 border border-border h-11 px-3" />
-              </label>
               <label className="text-sm text-foreground/70 uppercase">Delivery Channel
                 <select value={deliveryChannel} onChange={(e) => setDeliveryChannel(e.target.value)} className="mt-2 w-full bg-black/40 border border-border h-11 px-3">
                   <option value="email">email</option>

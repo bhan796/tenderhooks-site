@@ -36,7 +36,7 @@ export default function OnboardingPage() {
         company_name: String(formData.get("company_name") || ""),
         contact_name: String(formData.get("contact_name") || ""),
         contact_email: String(formData.get("contact_email") || ""),
-        digest_time: String(formData.get("digest_time") || "07:30"),
+        digest_time: "07:30",
         primary_services: String(formData.get("primary_services") || ""),
         keywords: String(formData.get("keywords") || ""),
         contract_size: String(formData.get("contract_size") || "any"),
@@ -85,7 +85,6 @@ export default function OnboardingPage() {
             <label className="text-sm text-foreground/70 uppercase">Company name*<input name="company_name" required className="mt-2 w-full bg-black/40 border border-border h-11 px-3" /></label>
             <label className="text-sm text-foreground/70 uppercase">Contact name*<input name="contact_name" required className="mt-2 w-full bg-black/40 border border-border h-11 px-3" /></label>
             <label className="text-sm text-foreground/70 uppercase">Contact email*<input name="contact_email" type="email" required className="mt-2 w-full bg-black/40 border border-border h-11 px-3" /></label>
-            <label className="text-sm text-foreground/70 uppercase">Digest time*<input name="digest_time" type="time" defaultValue="07:30" className="mt-2 w-full bg-black/40 border border-border h-11 px-3" /></label>
             <label className="text-sm text-foreground/70 uppercase md:col-span-2">Primary services*<textarea name="primary_services" rows={4} required className="mt-2 w-full bg-black/40 border border-border p-3" /></label>
             <label className="text-sm text-foreground/70 uppercase md:col-span-2">Keywords to prioritize*<input name="keywords" placeholder="cloud, managed services, cybersecurity" required className="mt-2 w-full bg-black/40 border border-border h-11 px-3" /></label>
             <label className="text-sm text-foreground/70 uppercase">Contract size<select name="contract_size" className="mt-2 w-full bg-black/40 border border-border h-11 px-3"><option>any</option><option>small</option><option>medium</option><option>large</option></select></label>
