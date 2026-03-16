@@ -7,7 +7,6 @@ import { requireSupabaseConfig, supabase } from "@/lib/supabase";
 
 type PreferenceRow = {
   user_id: string;
-  company_name: string | null;
   regions: string[] | null;
   keywords: string[] | null;
   exclude_keywords: string[] | null;
@@ -30,7 +29,6 @@ export default function ProfilePage() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  const [companyName, setCompanyName] = useState("");
   const [regions, setRegions] = useState("New Zealand, Auckland, Wellington");
   const [keywords, setKeywords] = useState("cloud, managed services, cybersecurity");
   const [excludeKeywords, setExcludeKeywords] = useState("construction");
@@ -57,7 +55,7 @@ export default function ProfilePage() {
 
       const { data: row, error: fetchError } = await client
         .from("user_preferences")
-        .select("user_id, company_name, regions, keywords, exclude_keywords, digest_time, delivery_channel")
+        .select("user_id, regions, keywords, exclude_keywords, digest_time, delivery_channel")
         .eq("user_id", user.id)
         .maybeSingle<PreferenceRow>();
 
@@ -68,7 +66,6 @@ export default function ProfilePage() {
       }
 
       if (row) {
-        setCompanyName(row.company_name || "");
         setRegions((row.regions || []).join(", "));
         setKeywords((row.keywords || []).join(", "));
         setExcludeKeywords((row.exclude_keywords || []).join(", "));
@@ -92,7 +89,6 @@ export default function ProfilePage() {
 
     const payload = {
       user_id: userId,
-      company_name: companyName.trim() || null,
       regions: parseCsv(regions),
       keywords: parseCsv(keywords),
       exclude_keywords: parseCsv(excludeKeywords),
@@ -132,9 +128,6 @@ export default function ProfilePage() {
 
         <div className="border border-border bg-black/45 backdrop-blur-xs p-6 md:p-8">
           <form onSubmit={onSave} className="grid gap-4 font-mono">
-            <label className="text-sm text-foreground/70 uppercase">Company name
-              <input value={companyName} onChange={(e) => setCompanyName(e.target.value)} className="mt-2 w-full bg-black/40 border border-border h-11 px-3" />
-            </label>
             <label className="text-sm text-foreground/70 uppercase">Regions (comma separated)
               <input value={regions} onChange={(e) => setRegions(e.target.value)} className="mt-2 w-full bg-black/40 border border-border h-11 px-3" />
             </label>
