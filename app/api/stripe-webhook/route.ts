@@ -4,6 +4,7 @@ import { requireStripe } from "@/lib/stripe";
 import { requireSupabaseAdmin } from "@/lib/supabase-admin";
 
 export const dynamic = "force-dynamic";
+export const runtime = "edge";
 
 function extractSubscriptionSnapshot(sub: Stripe.Subscription) {
   const raw = sub as any;

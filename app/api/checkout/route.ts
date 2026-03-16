@@ -2,6 +2,7 @@
 import { requireStripe } from "@/lib/stripe";
 
 export const dynamic = "force-dynamic";
+export const runtime = "edge";
 
 type PlanTier = "starter" | "pro";
 
