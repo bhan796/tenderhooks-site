@@ -50,11 +50,11 @@ export const Header = () => {
             </>
           ) : (
             <Link className="uppercase transition-colors ease-out duration-150 font-mono text-foreground/70 hover:text-foreground" href="/login">
-              Log In
+              Sign Up
             </Link>
           )}
           {!email ? (
-            <Link className="uppercase transition-colors ease-out duration-150 font-mono text-primary hover:text-primary/80" href="/onboarding">
+            <Link className="uppercase transition-colors ease-out duration-150 font-mono text-primary hover:text-primary/80" href="/login?next=%2Fonboarding">
               Start Trial
             </Link>
           ) : null}

@@ -22,7 +22,10 @@ export default function LoginPage() {
       setLoading(true);
       setError("");
       setSent(false);
-      const redirectTo = `${window.location.origin}/dashboard`;
+      const params = new URLSearchParams(window.location.search);
+      const next = params.get("next") || "/dashboard";
+      const safeNext = next.startsWith("/") ? next : "/dashboard";
+      const redirectTo = `${window.location.origin}${safeNext}`;
       const { error: signInError } = await client.auth.signInWithOtp({
         email: email.trim().toLowerCase(),
         options: { emailRedirectTo: redirectTo },
@@ -44,8 +47,8 @@ export default function LoginPage() {
       <GL hovering={false} />
       <section className="relative z-10 pt-36 md:pt-44 max-w-xl mx-auto">
         <div className="text-center mb-8">
-          <h1 className="font-sentient text-4xl md:text-6xl">Client Login</h1>
-          <p className="font-mono text-foreground/65 mt-4">Enter your email for a secure magic-link sign in.</p>
+          <h1 className="font-sentient text-4xl md:text-6xl">Create account or log in</h1>
+          <p className="font-mono text-foreground/65 mt-4">Use your email and we will send a secure magic link.</p>
         </div>
 
         <div className="border border-border bg-black/45 backdrop-blur-xs p-6 md:p-8">
@@ -64,9 +67,9 @@ export default function LoginPage() {
               className="inline-flex uppercase border border-primary text-primary-foreground h-14 px-6 font-mono [clip-path:polygon(16px_0,calc(100%_-_16px)_0,100%_0,100%_calc(100%_-_16px),calc(100%_-_16px)_100%,0_100%,0_calc(100%_-_16px),0_16px)] [box-shadow:inset_0_0_54px_0px_#EBB800] disabled:opacity-60"
               type="submit"
             >
-              {loading ? "Sending..." : "Send Magic Link"}
+              {loading ? "Sending..." : "Continue with Magic Link"}
             </button>
-            {sent ? <p className="text-sm text-foreground/70">Check your email for the login link.</p> : null}
+            {sent ? <p className="text-sm text-foreground/70">Check your email for the secure sign-in link.</p> : null}
             {error ? <p className="text-sm text-red-400">{error}</p> : null}
             {!supabase ? (
               <p className="text-sm text-red-400">

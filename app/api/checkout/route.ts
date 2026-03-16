@@ -1,5 +1,6 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { requireStripe } from "@/lib/stripe";
+import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 export const dynamic = "force-dynamic";
 export const runtime = "edge";
@@ -12,18 +13,23 @@ function normalizePlan(value: string): PlanTier {
 
 export async function POST(req: NextRequest) {
   try {
-    const body = (await req.json()) as Record<string, unknown>;
-    const plan = normalizePlan(String(body.plan || "starter"));
-    const email = String(body.contact_email || "").trim().toLowerCase();
-
-    if (!email) {
-      return NextResponse.json({ error: "contact_email is required" }, { status: 400 });
+    const authHeader = req.headers.get("authorization") || "";
+    const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
+    if (!token) {
+      return NextResponse.json({ error: "Sign in is required before checkout." }, { status: 401 });
     }
 
-    const priceId =
-      plan === "pro"
-        ? process.env.STRIPE_PRICE_ID_PRO
-        : process.env.STRIPE_PRICE_ID_STARTER;
+    const supabase = createSupabaseServerClient();
+    const { data: authData, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !authData.user?.email) {
+      return NextResponse.json({ error: "Session is invalid. Please sign in again." }, { status: 401 });
+    }
+
+    const body = (await req.json()) as Record<string, unknown>;
+    const plan = normalizePlan(String(body.plan || "starter"));
+    const email = authData.user.email.trim().toLowerCase();
+
+    const priceId = plan === "pro" ? process.env.STRIPE_PRICE_ID_PRO : process.env.STRIPE_PRICE_ID_STARTER;
 
     if (!priceId) {
       return NextResponse.json({ error: `Price ID for ${plan} not configured.` }, { status: 503 });

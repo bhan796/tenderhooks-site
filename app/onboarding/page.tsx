@@ -1,15 +1,20 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { GL } from "@/components/gl";
+import { requireSupabaseConfig, supabase } from "@/lib/supabase";
 
 type PlanTier = "starter" | "pro";
 type SubmitState = "idle" | "submitting" | "error";
 
 export default function OnboardingPage() {
+  const router = useRouter();
   const [plan, setPlan] = useState<PlanTier>("starter");
   const [state, setState] = useState<SubmitState>("idle");
   const [error, setError] = useState<string>("");
+  const [email, setEmail] = useState("");
+  const [authReady, setAuthReady] = useState(false);
 
   useEffect(() => {
     const url = new URL(window.location.href);
@@ -17,13 +22,52 @@ export default function OnboardingPage() {
     setPlan(p === "pro" ? "pro" : "starter");
   }, []);
 
+  useEffect(() => {
+    if (!supabase) {
+      setAuthReady(true);
+      return;
+    }
+
+    const client = requireSupabaseConfig();
+    client.auth.getSession().then(({ data }) => {
+      const userEmail = data.session?.user?.email || "";
+      if (!userEmail) {
+        const url = new URL(window.location.href);
+        const planParam = url.searchParams.get("plan");
+        const next = planParam ? `/onboarding?plan=${encodeURIComponent(planParam)}` : "/onboarding";
+        router.replace(`/login?next=${encodeURIComponent(next)}`);
+        return;
+      }
+      setEmail(userEmail.toLowerCase());
+      setAuthReady(true);
+    });
+  }, [router]);
+
   async function onSubmit(formData: FormData) {
+    if (!supabase) {
+      setState("error");
+      setError("Supabase is not configured.");
+      return;
+    }
+
+    const client = requireSupabaseConfig();
+    const {
+      data: { session },
+    } = await client.auth.getSession();
+
+    if (!session?.access_token || !session.user.email) {
+      setState("error");
+      setError("Please sign in before starting your trial.");
+      router.replace("/login?next=%2Fonboarding");
+      return;
+    }
+
     setState("submitting");
     setError("");
     const payload = {
       company_name: String(formData.get("company_name") || ""),
       contact_name: String(formData.get("contact_name") || ""),
-      contact_email: String(formData.get("contact_email") || ""),
+      contact_email: session.user.email.toLowerCase(),
       digest_time: "07:30",
       primary_services: String(formData.get("primary_services") || ""),
       keywords: String(formData.get("keywords") || ""),
@@ -36,7 +80,10 @@ export default function OnboardingPage() {
     try {
       const res = await fetch("/api/checkout", {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: {
+          "content-type": "application/json",
+          authorization: `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify(payload),
       });
       const body = (await res.json()) as { url?: string; error?: string };
@@ -62,7 +109,7 @@ export default function OnboardingPage() {
         <div className="text-center mb-10">
           <h1 className="font-sentient text-4xl md:text-6xl">Start your Tender Hooks trial</h1>
           <p className="font-mono text-foreground/65 mt-5 max-w-2xl mx-auto">
-            Pick a plan, complete onboarding, then pay securely via Stripe.
+            Create your account, choose a plan, then start your 7-day free trial in Stripe.
           </p>
         </div>
 
@@ -78,6 +125,7 @@ export default function OnboardingPage() {
         </div>
 
         <div className="border border-border bg-black/45 backdrop-blur-xs p-6 md:p-8">
+          {!authReady ? <p className="font-mono text-foreground/70 mb-4">Checking your account...</p> : null}
           <form
             onSubmit={async (e) => {
               e.preventDefault();
@@ -85,15 +133,15 @@ export default function OnboardingPage() {
             }}
             className="grid md:grid-cols-2 gap-4 font-mono"
           >
+            <label className="text-sm text-foreground/70 uppercase">Account email<input value={email} readOnly className="mt-2 w-full bg-black/30 border border-border h-11 px-3 text-foreground/80" /></label>
             <label className="text-sm text-foreground/70 uppercase">Company name*<input name="company_name" required className="mt-2 w-full bg-black/40 border border-border h-11 px-3" /></label>
             <label className="text-sm text-foreground/70 uppercase">Contact name*<input name="contact_name" required className="mt-2 w-full bg-black/40 border border-border h-11 px-3" /></label>
-            <label className="text-sm text-foreground/70 uppercase">Contact email*<input name="contact_email" type="email" required className="mt-2 w-full bg-black/40 border border-border h-11 px-3" /></label>
             <label className="text-sm text-foreground/70 uppercase md:col-span-2">Primary services*<textarea name="primary_services" rows={4} required className="mt-2 w-full bg-black/40 border border-border p-3" /></label>
             <label className="text-sm text-foreground/70 uppercase md:col-span-2">Keywords to prioritize*<input name="keywords" placeholder="cloud, managed services, cybersecurity" required className="mt-2 w-full bg-black/40 border border-border h-11 px-3" /></label>
             <label className="text-sm text-foreground/70 uppercase">Contract size<select name="contract_size" className="mt-2 w-full bg-black/40 border border-border h-11 px-3"><option>any</option><option>small</option><option>medium</option><option>large</option></select></label>
             <label className="text-sm text-foreground/70 uppercase">Delivery channel<select name="delivery_channel" className="mt-2 w-full bg-black/40 border border-border h-11 px-3"><option>email</option><option>telegram</option></select></label>
             <div className="md:col-span-2 pt-2">
-              <button disabled={state === "submitting"} className="inline-flex uppercase border border-primary text-primary-foreground h-14 px-6 font-mono [clip-path:polygon(16px_0,calc(100%_-_16px)_0,100%_0,100%_calc(100%_-_16px),calc(100%_-_16px)_100%,0_100%,0_calc(100%_-_16px),0_16px)] [box-shadow:inset_0_0_54px_0px_#EBB800] disabled:opacity-60" type="submit">{state === "submitting" ? "Submitting..." : `Continue to ${plan === "pro" ? "Pro" : "Starter"} payment`}</button>
+              <button disabled={!authReady || state === "submitting"} className="inline-flex uppercase border border-primary text-primary-foreground h-14 px-6 font-mono [clip-path:polygon(16px_0,calc(100%_-_16px)_0,100%_0,100%_calc(100%_-_16px),calc(100%_-_16px)_100%,0_100%,0_calc(100%_-_16px),0_16px)] [box-shadow:inset_0_0_54px_0px_#EBB800] disabled:opacity-60" type="submit">{state === "submitting" ? "Submitting..." : `Continue to ${plan === "pro" ? "Pro" : "Starter"} payment`}</button>
             </div>
             {error ? <p className="md:col-span-2 text-sm text-red-400">{error}</p> : null}
           </form>

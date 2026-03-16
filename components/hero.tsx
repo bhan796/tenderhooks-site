@@ -62,14 +62,14 @@ export function Hero() {
           Tender Hooks scans NZ/AU opportunities, scores fit against your profile, and sends a decision-ready daily digest.
         </p>
         <div id="contact" className="mt-14">
-          <Link className="contents max-sm:hidden" href={isLoggedIn ? "/dashboard" : "/onboarding"}>
+          <Link className="contents max-sm:hidden" href={isSubscriber ? "/dashboard" : isLoggedIn ? "/onboarding" : "/login?next=%2Fonboarding"}>
             <Button onMouseEnter={() => setHovering(true)} onMouseLeave={() => setHovering(false)}>
-              {isLoggedIn ? "[Daily Digest]" : "[Start Trial]"}
+              {isSubscriber ? "[Daily Digest]" : "[Start Trial]"}
             </Button>
           </Link>
-          <Link className="contents sm:hidden" href={isLoggedIn ? "/dashboard" : "/onboarding"}>
+          <Link className="contents sm:hidden" href={isSubscriber ? "/dashboard" : isLoggedIn ? "/onboarding" : "/login?next=%2Fonboarding"}>
             <Button size="sm" onMouseEnter={() => setHovering(true)} onMouseLeave={() => setHovering(false)}>
-              {isLoggedIn ? "[Daily Digest]" : "[Start Trial]"}
+              {isSubscriber ? "[Daily Digest]" : "[Start Trial]"}
             </Button>
           </Link>
         </div>
