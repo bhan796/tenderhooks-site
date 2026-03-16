@@ -1,0 +1,114 @@
+﻿"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { GL } from "@/components/gl";
+
+type TenderItem = {
+  title: string;
+  score: number;
+  buyer: string;
+  close: string;
+  region: string;
+  source: string;
+};
+
+const DAILY_TENDERS: TenderItem[] = [
+  {
+    title: "Managed Cloud Services Support Panel",
+    score: 92,
+    buyer: "Ministry of Education",
+    close: "2026-03-24",
+    region: "Wellington",
+    source: "GETS",
+  },
+  {
+    title: "Cyber Security Advisory and Monitoring",
+    score: 88,
+    buyer: "Auckland Transport",
+    close: "2026-03-22",
+    region: "Auckland",
+    source: "GETS",
+  },
+  {
+    title: "Application Support and Service Desk",
+    score: 83,
+    buyer: "Regional Council",
+    close: "2026-03-20",
+    region: "Hamilton",
+    source: "GETS",
+  },
+];
+
+export default function DashboardPage() {
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+
+  useEffect(() => {
+    const sessionRaw = localStorage.getItem("tenderhooks_session");
+    if (!sessionRaw) {
+      router.replace("/login");
+      return;
+    }
+
+    try {
+      const session = JSON.parse(sessionRaw) as { email?: string };
+      if (!session.email) {
+        router.replace("/login");
+        return;
+      }
+      setEmail(session.email);
+    } catch {
+      router.replace("/login");
+    }
+  }, [router]);
+
+  const todayLabel = useMemo(() => new Date().toLocaleDateString(), []);
+
+  function logout() {
+    localStorage.removeItem("tenderhooks_session");
+    router.replace("/");
+  }
+
+  if (!email) {
+    return null;
+  }
+
+  return (
+    <main className="relative min-h-svh px-4 pb-12">
+      <GL hovering={false} />
+      <section className="relative z-10 pt-32 md:pt-40 max-w-5xl mx-auto">
+        <div className="flex items-center justify-between gap-4 mb-8">
+          <div>
+            <h1 className="font-sentient text-3xl md:text-5xl">Daily Tender List</h1>
+            <p className="font-mono text-foreground/65 mt-2">{todayLabel} - Signed in as {email}</p>
+          </div>
+          <button onClick={logout} className="uppercase font-mono text-primary hover:text-primary/80">Log Out</button>
+        </div>
+
+        <div className="grid gap-4">
+          {DAILY_TENDERS.map((item) => (
+            <article key={item.title} className="border border-border bg-black/45 backdrop-blur-xs p-5">
+              <div className="flex items-start justify-between gap-4">
+                <h2 className="font-sentient text-2xl">{item.title}</h2>
+                <span className="font-mono text-primary">{item.score}/100</span>
+              </div>
+              <div className="mt-3 font-mono text-foreground/70 text-sm grid md:grid-cols-2 gap-y-2">
+                <p>Buyer: {item.buyer}</p>
+                <p>Close: {item.close}</p>
+                <p>Region: {item.region}</p>
+                <p>Source: {item.source}</p>
+              </div>
+            </article>
+          ))}
+        </div>
+
+        <div className="mt-8 font-mono text-sm text-foreground/55">
+          Demo view for now. Next step is wiring this page to your real generated digest/feed output.
+          <Link href="/onboarding" className="text-primary ml-2">Update profile</Link>
+        </div>
+      </section>
+    </main>
+  );
+}
