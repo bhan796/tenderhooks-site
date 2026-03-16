@@ -72,7 +72,7 @@ export default function OnboardingPage() {
       primary_services: String(formData.get("primary_services") || ""),
       keywords: String(formData.get("keywords") || ""),
       contract_size: String(formData.get("contract_size") || "any"),
-      delivery_channel: String(formData.get("delivery_channel") || "email"),
+      delivery_channel: "email",
       plan,
       submitted_at_utc: new Date().toISOString(),
     };
@@ -138,8 +138,7 @@ export default function OnboardingPage() {
             <label className="text-sm text-foreground/70 uppercase">Contact name*<input name="contact_name" required className="mt-2 w-full bg-black/40 border border-border h-11 px-3" /></label>
             <label className="text-sm text-foreground/70 uppercase md:col-span-2">Primary services*<textarea name="primary_services" rows={4} required className="mt-2 w-full bg-black/40 border border-border p-3" /></label>
             <label className="text-sm text-foreground/70 uppercase md:col-span-2">Keywords to prioritize*<input name="keywords" placeholder="cloud, managed services, cybersecurity" required className="mt-2 w-full bg-black/40 border border-border h-11 px-3" /></label>
-            <label className="text-sm text-foreground/70 uppercase">Contract size<select name="contract_size" className="mt-2 w-full bg-black/40 border border-border h-11 px-3"><option>any</option><option>small</option><option>medium</option><option>large</option></select></label>
-            <label className="text-sm text-foreground/70 uppercase">Delivery channel<select name="delivery_channel" className="mt-2 w-full bg-black/40 border border-border h-11 px-3"><option>email</option><option>telegram</option></select></label>
+            <label className="text-sm text-foreground/70 uppercase md:col-span-2">Contract size<select name="contract_size" className="mt-2 w-full bg-black/40 border border-border h-11 px-3"><option>any</option><option>small</option><option>medium</option><option>large</option></select></label>
             <div className="md:col-span-2 pt-2">
               <button disabled={!authReady || state === "submitting"} className="inline-flex uppercase border border-primary text-primary-foreground h-14 px-6 font-mono [clip-path:polygon(16px_0,calc(100%_-_16px)_0,100%_0,100%_calc(100%_-_16px),calc(100%_-_16px)_100%,0_100%,0_calc(100%_-_16px),0_16px)] [box-shadow:inset_0_0_54px_0px_#EBB800] disabled:opacity-60" type="submit">{state === "submitting" ? "Submitting..." : `Continue to ${plan === "pro" ? "Pro" : "Starter"} payment`}</button>
             </div>

@@ -10,7 +10,6 @@ type PreferenceRow = {
   regions: string[] | null;
   keywords: string[] | null;
   exclude_keywords: string[] | null;
-  delivery_channel: string | null;
 };
 
 function parseCsv(value: string): string[] {
@@ -31,7 +30,6 @@ export default function ProfilePage() {
   const [regions, setRegions] = useState("New Zealand, Auckland, Wellington");
   const [keywords, setKeywords] = useState("cloud, managed services, cybersecurity");
   const [excludeKeywords, setExcludeKeywords] = useState("construction");
-  const [deliveryChannel, setDeliveryChannel] = useState("email");
 
   useEffect(() => {
     if (!supabase) {
@@ -53,7 +51,7 @@ export default function ProfilePage() {
 
       const { data: row, error: fetchError } = await client
         .from("user_preferences")
-        .select("user_id, regions, keywords, exclude_keywords, delivery_channel")
+        .select("user_id, regions, keywords, exclude_keywords")
         .eq("user_id", user.id)
         .maybeSingle<PreferenceRow>();
 
@@ -67,7 +65,6 @@ export default function ProfilePage() {
         setRegions((row.regions || []).join(", "));
         setKeywords((row.keywords || []).join(", "));
         setExcludeKeywords((row.exclude_keywords || []).join(", "));
-        setDeliveryChannel(row.delivery_channel || "email");
       }
 
       setLoading(false);
@@ -90,7 +87,7 @@ export default function ProfilePage() {
       keywords: parseCsv(keywords),
       exclude_keywords: parseCsv(excludeKeywords),
       digest_time: "07:30",
-      delivery_channel: deliveryChannel,
+      delivery_channel: "email",
       updated_at: new Date().toISOString(),
     };
 
@@ -135,15 +132,6 @@ export default function ProfilePage() {
             <label className="text-sm text-foreground/70 uppercase">Exclude Keywords (comma separated)
               <input value={excludeKeywords} onChange={(e) => setExcludeKeywords(e.target.value)} className="mt-2 w-full bg-black/40 border border-border h-11 px-3" />
             </label>
-            <div className="grid md:grid-cols-2 gap-4">
-              <label className="text-sm text-foreground/70 uppercase">Delivery Channel
-                <select value={deliveryChannel} onChange={(e) => setDeliveryChannel(e.target.value)} className="mt-2 w-full bg-black/40 border border-border h-11 px-3">
-                  <option value="email">email</option>
-                  <option value="telegram">telegram</option>
-                </select>
-              </label>
-            </div>
-
             <button disabled={saving} className="inline-flex uppercase border border-primary text-primary-foreground h-14 px-6 font-mono [clip-path:polygon(16px_0,calc(100%_-_16px)_0,100%_0,100%_calc(100%_-_16px),calc(100%_-_16px)_100%,0_100%,0_calc(100%_-_16px),0_16px)] [box-shadow:inset_0_0_54px_0px_#EBB800] disabled:opacity-60" type="submit">
               {saving ? "Saving..." : "Save Preferences"}
             </button>
