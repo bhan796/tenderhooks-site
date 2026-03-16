@@ -27,6 +27,7 @@ export default function DashboardPage() {
   const [viewMode, setViewMode] = useState<ViewMode>("today");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [requiresSubscription, setRequiresSubscription] = useState(false);
 
   const todayIso = useMemo(() => new Date().toISOString().slice(0, 10), []);
   const todayLabel = useMemo(() => new Date().toLocaleDateString(), []);
@@ -66,7 +67,8 @@ export default function DashboardPage() {
       }
 
       if (!billingRows || billingRows.length === 0) {
-        setError("No active trial or subscription found. Start a trial to access your digest.");
+        setRequiresSubscription(true);
+        setError("");
         setLoading(false);
         return;
       }
@@ -176,6 +178,27 @@ export default function DashboardPage() {
         {loading ? (
           <div className="border border-border bg-black/45 backdrop-blur-xs p-8 font-mono text-foreground/70">
             Loading your {viewMode === "today" ? "daily tenders" : "history"}...
+          </div>
+        ) : requiresSubscription ? (
+          <div className="border border-border bg-black/45 backdrop-blur-xs p-8 text-center">
+            <h2 className="font-sentient text-3xl">Start your 7-day trial</h2>
+            <p className="font-mono text-foreground/65 mt-3 max-w-2xl mx-auto">
+              You need an active trial or subscription to access your daily digest.
+            </p>
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-4">
+              <Link
+                href="/onboarding"
+                className="inline-flex uppercase border border-primary text-primary-foreground h-12 px-6 font-mono [clip-path:polygon(16px_0,calc(100%_-_16px)_0,100%_0,100%_calc(100%_-_16px),calc(100%_-_16px)_100%,0_100%,0_calc(100%_-_16px),0_16px)] [box-shadow:inset_0_0_54px_0px_#EBB800]"
+              >
+                Start 7-Day Trial
+              </Link>
+              <Link href="/onboarding?plan=starter" className="uppercase font-mono text-primary hover:text-primary/80">
+                Starter Plan
+              </Link>
+              <Link href="/onboarding?plan=pro" className="uppercase font-mono text-primary hover:text-primary/80">
+                Pro Plan
+              </Link>
+            </div>
           </div>
         ) : items.length === 0 ? (
           <div className="border border-border bg-black/45 backdrop-blur-xs p-8 text-center">
