@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { GL } from "@/components/gl";
+import { requireSupabaseConfig, supabase } from "@/lib/supabase";
 
 type TenderItem = {
   title: string;
@@ -48,31 +49,56 @@ const DAILY_TENDERS: TenderItem[] = [
 export default function DashboardPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    const sessionRaw = localStorage.getItem("tenderhooks_session");
-    if (!sessionRaw) {
-      router.replace("/login");
+    if (!supabase) {
+      setError("Supabase not configured.");
       return;
     }
 
-    try {
-      const session = JSON.parse(sessionRaw) as { email?: string };
-      if (!session.email) {
+    const client = requireSupabaseConfig();
+
+    client.auth.getSession().then(({ data }) => {
+      const sessionEmail = data.session?.user?.email || "";
+      if (!sessionEmail) {
         router.replace("/login");
         return;
       }
-      setEmail(session.email);
-    } catch {
-      router.replace("/login");
-    }
+      setEmail(sessionEmail);
+    });
+
+    const {
+      data: { subscription },
+    } = client.auth.onAuthStateChange((_event, session) => {
+      const sessionEmail = session?.user?.email || "";
+      if (!sessionEmail) {
+        router.replace("/login");
+        return;
+      }
+      setEmail(sessionEmail);
+    });
+
+    return () => subscription.unsubscribe();
   }, [router]);
 
   const todayLabel = useMemo(() => new Date().toLocaleDateString(), []);
 
-  function logout() {
-    localStorage.removeItem("tenderhooks_session");
+  async function logout() {
+    if (supabase) {
+      const client = requireSupabaseConfig();
+      await client.auth.signOut();
+    }
     router.replace("/");
+  }
+
+  if (error) {
+    return (
+      <main className="relative min-h-svh px-4 pb-12">
+        <GL hovering={false} />
+        <section className="relative z-10 pt-36 max-w-3xl mx-auto font-mono text-red-400">{error}</section>
+      </main>
+    );
   }
 
   if (!email) {
@@ -104,14 +130,7 @@ export default function DashboardPage() {
                 <p>Region: {item.region}</p>
                 <p>Source: {item.source}</p>
               </div>
-              <a
-                href={item.url}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-block mt-4 uppercase font-mono text-primary hover:text-primary/80"
-              >
-                Open Tender
-              </a>
+              <a href={item.url} target="_blank" rel="noreferrer" className="inline-block mt-4 uppercase font-mono text-primary hover:text-primary/80">Open Tender</a>
             </article>
           ))}
         </div>
