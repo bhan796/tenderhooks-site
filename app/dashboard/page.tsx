@@ -52,6 +52,25 @@ export default function DashboardPage() {
       }
       setEmail(user.email || "");
 
+      const { data: billingRows, error: billingError } = await client
+        .from("billing_subscriptions")
+        .select("status")
+        .eq("customer_email", user.email || "")
+        .in("status", ["trialing", "active"])
+        .limit(1);
+
+      if (billingError && billingError.code !== "PGRST205") {
+        setError(billingError.message);
+        setLoading(false);
+        return;
+      }
+
+      if (!billingRows || billingRows.length === 0) {
+        setError("No active trial or subscription found. Start a trial to access your digest.");
+        setLoading(false);
+        return;
+      }
+
       const baseQuery = client
         .from("tender_recommendations")
         .select("id, title, score, buyer, close_date, region, source, url, recommended_for_date")

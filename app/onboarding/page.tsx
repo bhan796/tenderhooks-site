@@ -20,36 +20,39 @@ export default function OnboardingPage() {
   async function onSubmit(formData: FormData) {
     setState("submitting");
     setError("");
-    const checkoutLink =
-      plan === "pro"
-        ? process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK_PRO
-        : process.env.NEXT_PUBLIC_STRIPE_PAYMENT_LINK_STARTER;
-
-    if (!checkoutLink) {
-      setState("error");
-      setError("Missing Stripe payment link env vars.");
-      return;
-    }
+    const payload = {
+      company_name: String(formData.get("company_name") || ""),
+      contact_name: String(formData.get("contact_name") || ""),
+      contact_email: String(formData.get("contact_email") || ""),
+      digest_time: "07:30",
+      primary_services: String(formData.get("primary_services") || ""),
+      keywords: String(formData.get("keywords") || ""),
+      contract_size: String(formData.get("contract_size") || "any"),
+      delivery_channel: String(formData.get("delivery_channel") || "email"),
+      plan,
+      submitted_at_utc: new Date().toISOString(),
+    };
 
     try {
-      const onboardingPayload = {
-        company_name: String(formData.get("company_name") || ""),
-        contact_name: String(formData.get("contact_name") || ""),
-        contact_email: String(formData.get("contact_email") || ""),
-        digest_time: "07:30",
-        primary_services: String(formData.get("primary_services") || ""),
-        keywords: String(formData.get("keywords") || ""),
-        contract_size: String(formData.get("contract_size") || "any"),
-        delivery_channel: String(formData.get("delivery_channel") || "email"),
-        plan,
-        submitted_at_utc: new Date().toISOString(),
-      };
-      localStorage.setItem("tenderhooks_onboarding_draft", JSON.stringify(onboardingPayload));
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const body = (await res.json()) as { url?: string; error?: string };
+      if (!res.ok || !body.url) {
+        setState("error");
+        setError(body.error || "Could not start checkout.");
+        return;
+      }
+      localStorage.setItem("tenderhooks_onboarding_draft", JSON.stringify(payload));
+      window.location.href = body.url;
+      return;
     } catch {
-      // Non-blocking in static mode.
+      setState("error");
+      setError("Could not connect to checkout.");
+      return;
     }
-
-    window.location.href = checkoutLink;
   }
 
   return (
