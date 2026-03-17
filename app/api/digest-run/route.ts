@@ -18,6 +18,9 @@ type FeedTender = {
   region: string;
   close_date: string | null;
   url: string;
+  description: string;
+  category: string;
+  tender_type: string;
 };
 
 function normalizeApifyActorId(actorId: string) {
@@ -34,6 +37,22 @@ function parseMaybeDate(raw: string | null): string | null {
   if (!v) return null;
   const m = v.match(/\d{4}-\d{2}-\d{2}/);
   return m ? m[0] : null;
+}
+
+function parseDayMonYear(raw: string | null): string | null {
+  if (!raw) return null;
+  const m = raw.match(/(\d{1,2})\s+([A-Za-z]{3,9})\s+(\d{4})/);
+  if (!m) return null;
+  const day = Number(m[1]);
+  const monTxt = m[2].slice(0, 3).toLowerCase();
+  const year = Number(m[3]);
+  const monthMap: Record<string, number> = {
+    jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6,
+    jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12,
+  };
+  const mm = monthMap[monTxt];
+  if (!mm || day < 1 || day > 31) return null;
+  return `${year}-${String(mm).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
 function dedupe(rows: FeedTender[]) {
@@ -61,13 +80,27 @@ function parseJsonRows(source: string, payload: unknown): FeedTender[] {
     .filter((x): x is Record<string, unknown> => typeof x === "object" && x !== null)
     .map((x) => ({
       source,
-      title: String(x.title || x.notice_title || "Untitled opportunity").trim(),
-      buyer: String(x.buyer || x.agency || "Unknown buyer").trim(),
-      region: String(x.region || x.location || (source === "GETS" ? "New Zealand" : "Australia")).trim(),
-      close_date: parseMaybeDate(String(x.close_date || x.deadline || "")),
-      url: String(x.url || x.link || "").trim(),
+      title: String(
+        x.title || x.notice_title || x.description || x.cnId || x.rfxId || "Untitled opportunity",
+      ).trim(),
+      buyer: String(x.buyer || x.organization || x.agency || "Unknown buyer").trim(),
+      region: String(
+        x.region || x.location || x.country || (source === "GETS" ? "New Zealand" : "Australia"),
+      ).trim(),
+      close_date:
+        parseMaybeDate(String(x.close_date || x.deadline || x.publishedDate || "")) ||
+        parseDayMonYear(String(x.closeDate || "")),
+      url: String(
+        x.url ||
+          x.link ||
+          (source === "GETS" && x.rfxId ? `https://www.gets.govt.nz/ExternalTenderDetails.htm?id=${x.rfxId}` : "") ||
+          (source === "AusTender" && x.cnId ? `https://www.tenders.gov.au/cn/show/${x.cnId}` : ""),
+      ).trim(),
+      description: String(x.description || "").trim(),
+      category: String(x.unspscCode || x.category || "").trim(),
+      tender_type: String(x.tenderType || x.notice_type || "").trim(),
     }))
-    .filter((x) => x.title.length >= 4 && okUrl(x.url));
+    .filter((x) => x.title.length >= 4 && okUrl(x.url) && x.url.length > 10);
 }
 
 async function fetchFromApify(source: "GETS" | "AusTender", actorId?: string): Promise<FeedTender[]> {
@@ -117,6 +150,9 @@ function parseXmlRows(source: string, text: string): FeedTender[] {
         region: source === "GETS" ? "New Zealand" : "Australia",
         close_date: parseMaybeDate(dt),
         url,
+        description: "",
+        category: "",
+        tender_type: "",
       };
     })
     .filter((x) => x.title.length >= 4 && okUrl(x.url));
@@ -140,8 +176,11 @@ function parseCsvRows(source: string, text: string): FeedTender[] {
       title: (iTitle >= 0 ? cols[iTitle] : "Untitled opportunity")?.trim() || "Untitled opportunity",
       buyer: (iBuyer >= 0 ? cols[iBuyer] : "Unknown buyer")?.trim() || "Unknown buyer",
       region: (iRegion >= 0 ? cols[iRegion] : source === "GETS" ? "New Zealand" : "Australia")?.trim() || "Unknown region",
-      close_date: parseMaybeDate(iClose >= 0 ? cols[iClose] : ""),
+      close_date: parseMaybeDate(iClose >= 0 ? cols[iClose] : "") || parseDayMonYear(iClose >= 0 ? cols[iClose] : ""),
       url: (iUrl >= 0 ? cols[iUrl] : "")?.trim() || "",
+      description: "",
+      category: "",
+      tender_type: "",
     }))
     .filter((x) => x.title.length >= 4 && okUrl(x.url));
 }
@@ -180,7 +219,7 @@ async function fetchFeed(source: "GETS" | "AusTender", url?: string): Promise<Fe
 function scoreTender(t: FeedTender, prefs: PrefRow) {
   let score = 0;
   const reasons: string[] = [];
-  const text = `${t.title} ${t.buyer} ${t.region}`.toLowerCase();
+  const text = `${t.title} ${t.buyer} ${t.region} ${t.description} ${t.category} ${t.tender_type}`.toLowerCase();
 
   for (const kw of prefs.keywords || []) {
     if (kw && text.includes(kw.toLowerCase())) {
