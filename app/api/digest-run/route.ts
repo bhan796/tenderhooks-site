@@ -20,6 +20,10 @@ type FeedTender = {
   url: string;
 };
 
+function normalizeApifyActorId(actorId: string) {
+  return actorId.includes("/") ? actorId.replace("/", "~") : actorId;
+}
+
 function okUrl(url: string) {
   return /^https?:\/\//i.test(url);
 }
@@ -64,6 +68,30 @@ function parseJsonRows(source: string, payload: unknown): FeedTender[] {
       url: String(x.url || x.link || "").trim(),
     }))
     .filter((x) => x.title.length >= 4 && okUrl(x.url));
+}
+
+async function fetchFromApify(source: "GETS" | "AusTender", actorId?: string): Promise<FeedTender[]> {
+  const token = process.env.APIFY_TOKEN;
+  if (!token || !actorId) return [];
+
+  const normalizedId = normalizeApifyActorId(actorId);
+  const endpoint = `https://api.apify.com/v2/acts/${encodeURIComponent(
+    normalizedId,
+  )}/run-sync-get-dataset-items?token=${encodeURIComponent(token)}&clean=true`;
+
+  const res = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "user-agent": "TenderHooksBot/1.0 (+https://tenderhooks.co.nz)",
+    },
+    body: JSON.stringify({}),
+  });
+  if (!res.ok) return [];
+
+  const payload = await res.json().catch(() => null);
+  if (!payload) return [];
+  return parseJsonRows(source, payload);
 }
 
 function parseXmlRows(source: string, text: string): FeedTender[] {
@@ -185,12 +213,21 @@ export async function POST(req: NextRequest) {
   const supabase = requireSupabaseAdmin();
   const today = new Date().toISOString().slice(0, 10);
 
+  const apifyGetsActorId = process.env.APIFY_GETS_ACTOR_ID;
+  const apifyAusActorId = process.env.APIFY_AUSTENDER_ACTOR_ID;
   const getsUrl = process.env.GETS_FEED_URL;
   const austenderUrl = process.env.AUSTENDER_FEED_URL;
-  const [getsRows, ausRows] = await Promise.all([
-    fetchFeed("GETS", getsUrl),
-    fetchFeed("AusTender", austenderUrl),
+  const [apifyGetsRows, apifyAusRows] = await Promise.all([
+    fetchFromApify("GETS", apifyGetsActorId),
+    fetchFromApify("AusTender", apifyAusActorId),
   ]);
+  const [fallbackGetsRows, fallbackAusRows] = await Promise.all([
+    apifyGetsRows.length ? Promise.resolve([] as FeedTender[]) : fetchFeed("GETS", getsUrl),
+    apifyAusRows.length ? Promise.resolve([] as FeedTender[]) : fetchFeed("AusTender", austenderUrl),
+  ]);
+
+  const getsRows = apifyGetsRows.length ? apifyGetsRows : fallbackGetsRows;
+  const ausRows = apifyAusRows.length ? apifyAusRows : fallbackAusRows;
   const feedRows = dedupe([...getsRows, ...ausRows]);
 
   const { data: prefs, error: prefErr } = await supabase
@@ -276,7 +313,7 @@ export async function POST(req: NextRequest) {
     rows_fetched: feedRows.length,
     rows_inserted: inserted,
     status: "ok",
-    notes: `gets=${getsRows.length},austender=${ausRows.length},eligible_users=${eligiblePrefs.length}`,
+    notes: `gets=${getsRows.length},austender=${ausRows.length},eligible_users=${eligiblePrefs.length},source_gets=${apifyGetsRows.length ? "apify" : "feed"},source_aus=${apifyAusRows.length ? "apify" : "feed"}`,
   });
 
   return NextResponse.json({
