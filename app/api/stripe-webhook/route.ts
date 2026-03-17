@@ -40,17 +40,17 @@ export async function POST(req: NextRequest) {
   }
 
   const supabase = requireSupabaseAdmin();
+  const stripe = requireStripe();
 
   try {
     if (event.type === "checkout.session.completed") {
       const session = event.data.object as Stripe.Checkout.Session;
       if (session.mode === "subscription" && session.subscription) {
-        const stripe = requireStripe();
         const sub = await stripe.subscriptions.retrieve(String(session.subscription));
 
         const payload = {
           ...extractSubscriptionSnapshot(sub),
-          customer_email: session.customer_email || null,
+          customer_email: session.customer_email ? session.customer_email.toLowerCase() : null,
           plan: (sub.metadata?.plan || session.metadata?.plan || "starter") as string,
         };
 
@@ -64,8 +64,19 @@ export async function POST(req: NextRequest) {
       event.type === "customer.subscription.deleted"
     ) {
       const sub = event.data.object as Stripe.Subscription;
+      const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer.id;
+      let customerEmail: string | null = null;
+      try {
+        const customer = await stripe.customers.retrieve(customerId);
+        if (!("deleted" in customer)) {
+          customerEmail = customer.email ? customer.email.toLowerCase() : null;
+        }
+      } catch {
+        customerEmail = null;
+      }
       const payload = {
         ...extractSubscriptionSnapshot(sub),
+        customer_email: customerEmail,
         plan: (sub.metadata?.plan || "starter") as string,
       };
       await supabase.from("billing_subscriptions").upsert(payload, { onConflict: "stripe_subscription_id" });

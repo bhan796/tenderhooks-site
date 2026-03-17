@@ -51,12 +51,20 @@ export default function DashboardPage() {
         router.replace("/login");
         return;
       }
-      setEmail(user.email || "");
+      const email = (user.email || "").toLowerCase();
+      setEmail(email);
+
+      if (data.session?.access_token) {
+        await fetch("/api/billing-sync", {
+          method: "POST",
+          headers: { authorization: `Bearer ${data.session.access_token}` },
+        }).catch(() => null);
+      }
 
       const { data: billingRows, error: billingError } = await client
         .from("billing_subscriptions")
         .select("status")
-        .eq("customer_email", user.email || "")
+        .eq("customer_email", email)
         .in("status", ["trialing", "active"])
         .limit(1);
 
