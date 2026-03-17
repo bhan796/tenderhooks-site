@@ -34,7 +34,6 @@ export default function ProfilePage() {
   const [accessToken, setAccessToken] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [openingBilling, setOpeningBilling] = useState(false);
   const [updatingSubscription, setUpdatingSubscription] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -115,31 +114,6 @@ export default function ProfilePage() {
       setLoading(false);
     });
   }, [router]);
-
-  async function onManageBilling() {
-    if (!accessToken) return;
-    setOpeningBilling(true);
-    setBillingHint("");
-
-    try {
-      const res = await fetch("/api/billing-portal", {
-        method: "POST",
-        headers: {
-          authorization: `Bearer ${accessToken}`,
-        },
-      });
-      const body = (await res.json()) as { url?: string; error?: string };
-      if (!res.ok || !body.url) {
-        setBillingHint(body.error || "Billing portal is unavailable right now.");
-        return;
-      }
-      window.location.href = body.url;
-    } catch {
-      setBillingHint("Billing portal is unavailable right now.");
-    } finally {
-      setOpeningBilling(false);
-    }
-  }
 
   async function updateSubscription(action: "cancel" | "resume") {
     if (!accessToken) return;
@@ -279,14 +253,6 @@ export default function ProfilePage() {
                 )}
               </div>
             ) : null}
-            <button
-              type="button"
-              onClick={onManageBilling}
-              disabled={openingBilling || !accessToken}
-              className="font-mono text-xs uppercase text-foreground/45 hover:text-foreground/70 transition-colors disabled:opacity-50"
-            >
-              {openingBilling ? "Opening billing..." : "Manage billing"}
-            </button>
             {billingHint ? <p className="mt-2 font-mono text-xs text-red-400">{billingHint}</p> : null}
           </div>
         </div>
