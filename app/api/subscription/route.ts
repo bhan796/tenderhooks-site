@@ -48,15 +48,20 @@ async function getAuthedEmail(req: NextRequest) {
 
 async function loadLatestSubscription(email: string) {
   const supabase = requireSupabaseAdmin();
-  const { data: row, error } = await supabase
+  const { data: rows, error } = await supabase
     .from("billing_subscriptions")
     .select("stripe_subscription_id, stripe_customer_id, customer_email, status, current_period_end, trial_end, cancel_at_period_end, plan")
     .eq("customer_email", email)
     .order("updated_at", { ascending: false })
-    .limit(1)
-    .maybeSingle<DbSubRow>();
+    .limit(25);
 
-  return { row, error };
+  if (error) return { row: null as DbSubRow | null, error };
+  if (!rows || rows.length === 0) return { row: null as DbSubRow | null, error: null };
+
+  const allRows = rows as DbSubRow[];
+  const preferredStatuses = new Set(["trialing", "active", "past_due", "unpaid"]);
+  const preferred = allRows.find((r) => preferredStatuses.has((r.status || "").toLowerCase()));
+  return { row: preferred || allRows[0], error: null };
 }
 
 export async function GET(req: NextRequest) {
@@ -94,6 +99,11 @@ export async function POST(req: NextRequest) {
     if (rowError) return NextResponse.json({ error: rowError.message }, { status: 500 });
     if (!row?.stripe_subscription_id) {
       return NextResponse.json({ error: "No subscription found for this account." }, { status: 404 });
+    }
+
+    const rowStatus = (row.status || "").toLowerCase();
+    if (action === "cancel" && !["trialing", "active", "past_due", "unpaid"].includes(rowStatus)) {
+      return NextResponse.json({ error: `Subscription cannot be cancelled from status: ${row.status}.` }, { status: 400 });
     }
 
     const stripe = requireStripe();

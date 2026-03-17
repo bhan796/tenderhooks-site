@@ -45,6 +45,13 @@ export default function ProfilePage() {
   const [regions, setRegions] = useState("New Zealand, Auckland, Wellington");
   const [keywords, setKeywords] = useState("cloud, managed services, cybersecurity");
   const [excludeKeywords, setExcludeKeywords] = useState("construction");
+  const activeUntilIso = subscription?.currentPeriodEnd || subscription?.trialEnd || null;
+  const activeUntilLabel = activeUntilIso ? new Date(activeUntilIso).toLocaleDateString() : null;
+  const statusLabel = subscription
+    ? subscription.cancelAtPeriodEnd && ["trialing", "active"].includes(subscription.status.toLowerCase())
+      ? "scheduled_to_cancel"
+      : subscription.status
+    : "none";
 
   useEffect(() => {
     if (!supabase) {
@@ -225,12 +232,12 @@ export default function ProfilePage() {
             {subscription?.hasSubscription ? (
               <div className="mb-3 text-left">
                 <p className="font-mono text-xs text-foreground/60 uppercase">
-                  Plan: {subscription.plan} · Status: {subscription.status}
+                  Plan: {subscription.plan} · Status: {statusLabel}
                 </p>
-                {subscription.currentPeriodEnd ? (
+                {activeUntilLabel ? (
                   <p className="font-mono text-xs text-foreground/50 mt-1">
                     {subscription.cancelAtPeriodEnd ? "Access ends" : "Renews"} on{" "}
-                    {new Date(subscription.currentPeriodEnd).toLocaleDateString()}.
+                    {activeUntilLabel}.
                   </p>
                 ) : null}
                 {!subscription.cancelAtPeriodEnd ? (
@@ -329,7 +336,9 @@ export default function ProfilePage() {
               <div>
                 <h2 className="font-sentient text-2xl">Final confirmation</h2>
                 <p className="font-mono text-foreground/65 mt-2">
-                  Your account will remain active until the end of the current billing period.
+                  {activeUntilLabel
+                    ? `Your account will remain active until ${activeUntilLabel}.`
+                    : "Your account will remain active until the end of the current billing period."}
                 </p>
                 <div className="mt-4 flex gap-3">
                   <button
