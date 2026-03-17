@@ -29,9 +29,83 @@ export default function DashboardPage() {
   const [error, setError] = useState("");
   const [syncError, setSyncError] = useState("");
   const [requiresSubscription, setRequiresSubscription] = useState(false);
+  const [countdown, setCountdown] = useState("");
 
   const todayIso = useMemo(() => new Date().toISOString().slice(0, 10), []);
   const todayLabel = useMemo(() => new Date().toLocaleDateString(), []);
+
+  useEffect(() => {
+    function getNzParts(nowMs: number) {
+      return new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Pacific/Auckland",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+      }).formatToParts(new Date(nowMs))
+        .reduce<Record<string, string>>((acc, p) => {
+          if (p.type !== "literal") acc[p.type] = p.value;
+          return acc;
+        }, {});
+    }
+
+    function getNzOffsetMinutes(nowMs: number) {
+      const tzPart = new Intl.DateTimeFormat("en-US", {
+        timeZone: "Pacific/Auckland",
+        timeZoneName: "shortOffset",
+      })
+        .formatToParts(new Date(nowMs))
+        .find((p) => p.type === "timeZoneName")?.value;
+
+      const match = (tzPart || "").match(/GMT([+-])(\d{1,2})(?::?(\d{2}))?/);
+      if (!match) return 12 * 60;
+      const sign = match[1] === "-" ? -1 : 1;
+      const h = Number(match[2] || "0");
+      const m = Number(match[3] || "0");
+      return sign * (h * 60 + m);
+    }
+
+    function getNextDigestUtcMs(nowMs: number) {
+      const parts = getNzParts(nowMs);
+      const y = Number(parts.year);
+      const m = Number(parts.month);
+      const d = Number(parts.day);
+      const h = Number(parts.hour);
+      const min = Number(parts.minute);
+      const s = Number(parts.second);
+
+      const isPastToday = h > 7 || (h === 7 && (min > 30 || (min === 30 && s > 0)));
+      const nzDateUtc = new Date(Date.UTC(y, m - 1, d, 0, 0, 0));
+      if (isPastToday) nzDateUtc.setUTCDate(nzDateUtc.getUTCDate() + 1);
+
+      const ty = nzDateUtc.getUTCFullYear();
+      const tm = nzDateUtc.getUTCMonth();
+      const td = nzDateUtc.getUTCDate();
+      const targetNaiveUtc = Date.UTC(ty, tm, td, 7, 30, 0);
+      const offsetMins = getNzOffsetMinutes(nowMs);
+      return targetNaiveUtc - offsetMins * 60 * 1000;
+    }
+
+    function refreshCountdown() {
+      const now = Date.now();
+      const nextRun = getNextDigestUtcMs(now);
+      const diffMs = Math.max(0, nextRun - now);
+      const totalSeconds = Math.floor(diffMs / 1000);
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
+      setCountdown(
+        `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`,
+      );
+    }
+
+    refreshCountdown();
+    const timer = setInterval(refreshCountdown, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     if (!supabase) {
@@ -183,6 +257,7 @@ export default function DashboardPage() {
           <div>
             <h1 className="font-sentient text-3xl md:text-5xl">Daily Tender List</h1>
             <p className="font-mono text-foreground/65 mt-2">{todayLabel} - Signed in as {email}</p>
+            <p className="font-mono text-foreground/50 mt-1">Next digest run (07:30 NZ): {countdown || "--:--:--"}</p>
           </div>
           <button onClick={logout} className="uppercase font-mono text-primary hover:text-primary/80">Log Out</button>
         </div>
