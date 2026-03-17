@@ -27,6 +27,7 @@ export default function DashboardPage() {
   const [viewMode, setViewMode] = useState<ViewMode>("today");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [syncError, setSyncError] = useState("");
   const [requiresSubscription, setRequiresSubscription] = useState(false);
 
   const todayIso = useMemo(() => new Date().toISOString().slice(0, 10), []);
@@ -44,6 +45,7 @@ export default function DashboardPage() {
     async function loadDashboard(mode: ViewMode) {
       setLoading(true);
       setError("");
+      setSyncError("");
 
       const { data } = await client.auth.getSession();
       const user = data.session?.user;
@@ -53,8 +55,25 @@ export default function DashboardPage() {
       }
       const email = (user.email || "").toLowerCase();
       setEmail(email);
+      const params = new URLSearchParams(window.location.search);
+      const checkoutSessionId = params.get("session_id") || "";
 
       if (data.session?.access_token) {
+        if (checkoutSessionId) {
+          const syncRes = await fetch("/api/billing-sync-session", {
+            method: "POST",
+            headers: {
+              "content-type": "application/json",
+              authorization: `Bearer ${data.session.access_token}`,
+            },
+            body: JSON.stringify({ sessionId: checkoutSessionId }),
+          }).catch(() => null);
+          if (syncRes && !syncRes.ok) {
+            const body = (await syncRes.json().catch(() => ({}))) as { error?: string };
+            setSyncError(body.error || "Could not sync checkout session.");
+          }
+        }
+
         await fetch("/api/billing-sync", {
           method: "POST",
           headers: { authorization: `Bearer ${data.session.access_token}` },
@@ -193,6 +212,7 @@ export default function DashboardPage() {
             <p className="font-mono text-foreground/65 mt-3 max-w-2xl mx-auto">
               You need an active trial or subscription to access your daily digest.
             </p>
+            {syncError ? <p className="font-mono text-red-400 mt-3">{syncError}</p> : null}
             <div className="mt-6 flex flex-wrap items-center justify-center gap-4">
               <Link
                 href="/onboarding"

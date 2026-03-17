@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
         plan,
         company_name: String(body.company_name || ""),
       },
-      success_url: `${origin}/dashboard?checkout=success`,
+      success_url: `${origin}/dashboard?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/onboarding?checkout=cancelled`,
     });
 
