@@ -38,6 +38,7 @@ export default function ProfilePage() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [billingHint, setBillingHint] = useState("");
+  const [billingHintType, setBillingHintType] = useState<"success" | "error">("error");
   const [subscription, setSubscription] = useState<SubscriptionState | null>(null);
   const [cancelStep, setCancelStep] = useState<"closed" | "confirm" | "reason" | "final">("closed");
   const [cancelReason, setCancelReason] = useState("Not enough relevant tenders");
@@ -126,6 +127,7 @@ export default function ProfilePage() {
     if (!accessToken) return;
     setUpdatingSubscription(true);
     setBillingHint("");
+    setBillingHintType("error");
 
     try {
       const res = await fetch("/api/subscription", {
@@ -139,6 +141,7 @@ export default function ProfilePage() {
       const body = (await res.json()) as { error?: string; status?: string; cancelAtPeriodEnd?: boolean };
       if (!res.ok) {
         setBillingHint(body.error || "Could not update your subscription.");
+        setBillingHintType("error");
         return;
       }
 
@@ -153,8 +156,10 @@ export default function ProfilePage() {
       );
       setCancelStep("closed");
       setBillingHint(action === "cancel" ? "Your subscription will end at period close." : "Your subscription is active again.");
+      setBillingHintType("success");
     } catch {
       setBillingHint("Could not update your subscription.");
+      setBillingHintType("error");
     } finally {
       setUpdatingSubscription(false);
     }
@@ -260,7 +265,11 @@ export default function ProfilePage() {
                 )}
               </div>
             ) : null}
-            {billingHint ? <p className="mt-2 font-mono text-xs text-red-400">{billingHint}</p> : null}
+            {billingHint ? (
+              <p className={`mt-2 font-mono text-xs ${billingHintType === "success" ? "text-green-400" : "text-red-400"}`}>
+                {billingHint}
+              </p>
+            ) : null}
           </div>
         </div>
 
