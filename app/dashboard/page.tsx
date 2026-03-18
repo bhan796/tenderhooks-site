@@ -16,6 +16,13 @@ type TenderItem = {
   source: string;
   url: string;
   recommendedForDate: string;
+  matchReasons: string[];
+  matchBreakdown: {
+    keyword_points?: number;
+    region_points?: number;
+    exclude_penalty?: number;
+    final_score?: number;
+  };
 };
 
 type ViewMode = "today" | "history";
@@ -176,7 +183,7 @@ export default function DashboardPage() {
 
       const baseQuery = client
         .from("tender_recommendations")
-        .select("id, title, score, buyer, close_date, region, source, url, recommended_for_date")
+        .select("id, title, score, buyer, close_date, region, source, url, recommended_for_date, match_reasons, match_breakdown")
         .eq("user_id", user.id)
         .eq("is_recommended", true);
 
@@ -209,6 +216,11 @@ export default function DashboardPage() {
           source: String(row.source || "Unknown source"),
           url: String(row.url || "#"),
           recommendedForDate: String(row.recommended_for_date || ""),
+          matchReasons: Array.isArray(row.match_reasons) ? row.match_reasons.map((x: unknown) => String(x)) : [],
+          matchBreakdown:
+            row.match_breakdown && typeof row.match_breakdown === "object"
+              ? row.match_breakdown
+              : {},
         })),
       );
       setLoading(false);
@@ -333,6 +345,16 @@ export default function DashboardPage() {
                   <p>Close: {item.close || "TBC"}</p>
                   <p>Region: {item.region}</p>
                   <p>Source: {item.source}</p>
+                  {item.matchReasons.length ? (
+                    <p className="md:col-span-2 text-foreground/85">
+                      Matched on: {item.matchReasons.map((r) => r.replace(/^keyword:|^region:|^exclude:/, "")).join(", ")}
+                    </p>
+                  ) : null}
+                  {(item.matchBreakdown.keyword_points || item.matchBreakdown.region_points || item.matchBreakdown.exclude_penalty) ? (
+                    <p className="md:col-span-2 text-foreground/55">
+                      Score detail: +{item.matchBreakdown.keyword_points || 0} keyword, +{item.matchBreakdown.region_points || 0} region, -{item.matchBreakdown.exclude_penalty || 0} exclusions
+                    </p>
+                  ) : null}
                   {viewMode === "history" ? <p className="md:col-span-2">Recommended: {item.recommendedForDate}</p> : null}
                 </div>
                 <a href={item.url} target="_blank" rel="noreferrer" className="inline-block mt-4 uppercase font-mono text-primary hover:text-primary/80">Open Tender</a>

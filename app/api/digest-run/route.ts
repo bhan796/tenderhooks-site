@@ -218,28 +218,44 @@ async function fetchFeed(source: "GETS" | "AusTender", url?: string): Promise<Fe
 
 function scoreTender(t: FeedTender, prefs: PrefRow) {
   let score = 0;
+  let keywordPoints = 0;
+  let regionPoints = 0;
+  let excludePenalty = 0;
   const reasons: string[] = [];
   const text = `${t.title} ${t.buyer} ${t.region} ${t.description} ${t.category} ${t.tender_type}`.toLowerCase();
 
   for (const kw of prefs.keywords || []) {
     if (kw && text.includes(kw.toLowerCase())) {
       score += 12;
+      keywordPoints += 12;
       reasons.push(`keyword:${kw}`);
     }
   }
   for (const rg of prefs.regions || []) {
     if (rg && text.includes(rg.toLowerCase())) {
       score += 8;
+      regionPoints += 8;
       reasons.push(`region:${rg}`);
     }
   }
   for (const ex of prefs.exclude_keywords || []) {
     if (ex && text.includes(ex.toLowerCase())) {
       score -= 15;
+      excludePenalty += 15;
       reasons.push(`exclude:${ex}`);
     }
   }
-  return { score: Math.max(0, Math.min(100, score)), reasons };
+  const finalScore = Math.max(0, Math.min(100, score));
+  return {
+    score: finalScore,
+    reasons,
+    breakdown: {
+      keyword_points: keywordPoints,
+      region_points: regionPoints,
+      exclude_penalty: excludePenalty,
+      final_score: finalScore,
+    },
+  };
 }
 
 export async function POST(req: NextRequest) {
@@ -314,9 +330,12 @@ export async function POST(req: NextRequest) {
   let inserted = 0;
   for (const pref of eligiblePrefs) {
     const scored = feedRows
-      .map((t) => ({ t, s: scoreTender(t, pref).score }))
-      .filter((x) => x.s >= 20)
-      .sort((a, b) => b.s - a.s)
+      .map((t) => {
+        const scoredTender = scoreTender(t, pref);
+        return { t, scoredTender };
+      })
+      .filter((x) => x.scoredTender.score >= 20)
+      .sort((a, b) => b.scoredTender.score - a.scoredTender.score)
       .slice(0, 25);
 
     await supabase
@@ -326,15 +345,17 @@ export async function POST(req: NextRequest) {
       .eq("recommended_for_date", today);
 
     if (scored.length) {
-      const rows = scored.map(({ t, s }) => ({
+      const rows = scored.map(({ t, scoredTender }) => ({
         user_id: pref.user_id,
         title: t.title,
-        score: s,
+        score: scoredTender.score,
         buyer: t.buyer,
         close_date: t.close_date,
         region: t.region,
         source: t.source,
         url: t.url,
+        match_reasons: scoredTender.reasons,
+        match_breakdown: scoredTender.breakdown,
         recommended_for_date: today,
         is_recommended: true,
         updated_at: new Date().toISOString(),
