@@ -329,14 +329,34 @@ export async function POST(req: NextRequest) {
   let usersProcessed = 0;
   let inserted = 0;
   for (const pref of eligiblePrefs) {
-    const scored = feedRows
+    const scoredAll = feedRows
       .map((t) => {
         const scoredTender = scoreTender(t, pref);
         return { t, scoredTender };
       })
-      .filter((x) => x.scoredTender.score >= 20)
-      .sort((a, b) => b.scoredTender.score - a.scoredTender.score)
-      .slice(0, 25);
+      .sort((a, b) => b.scoredTender.score - a.scoredTender.score);
+
+    const strictThreshold = 20;
+    const austenderFloorThreshold = 10;
+    const minAusTender = 3;
+    const baseMaxItems = 25;
+
+    const passStrict = scoredAll.filter((x) => x.scoredTender.score >= strictThreshold);
+    const baseTop = passStrict.slice(0, baseMaxItems);
+
+    const ausInBase = baseTop.filter((x) => x.t.source === "AusTender").length;
+    const neededAus = Math.max(0, minAusTender - ausInBase);
+
+    const extraAus = scoredAll
+      .filter(
+        (x) =>
+          x.t.source === "AusTender" &&
+          x.scoredTender.score >= austenderFloorThreshold &&
+          !baseTop.some((b) => b.t.url === x.t.url && b.t.title === x.t.title),
+      )
+      .slice(0, neededAus);
+
+    const scored = [...baseTop, ...extraAus];
 
     await supabase
       .from("tender_recommendations")
